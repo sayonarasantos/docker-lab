@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  rn-env:
+    container_name: rn-env
+    image: react-native:v2
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./:/app/

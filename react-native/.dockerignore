@@ -1,0 +1,15 @@
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# IOS
+ios/
+
+# React
+node_modules/
+
+# Git
+.gitignore
+.gitattributes
+README.md
