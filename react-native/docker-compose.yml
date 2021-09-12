@@ -1,8 +1,8 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  rn-env:
-    container_name: rn-env
+  rn-builder:
+    container_name: rn-builder
     image: react-native:v2
     build:
       context: .

@@ -11,5 +11,5 @@ node_modules/
 
 # Git
 .gitignore
-.gitattributes
+.git/
 README.md
