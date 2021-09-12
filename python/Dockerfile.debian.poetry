@@ -1,0 +1,52 @@
+# STAGE 1: Create base image
+
+FROM python:3.8-slim-buster as base
+
+ARG POETRY_VERSION=1.1.8
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    POETRY_VERSION=${POETRY_VERSION} \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_HOME=/opt/poetry \
+    PYSETUP_PATH=/opt/pysetup \
+    PROJECT_PATH=/opt/project \
+    DEBIAN_FRONTEND=noninteractive
+ENV PATH=$POETRY_HOME/bin:$PYSETUP_PATH/.venv/bin:$PATH
+
+
+# STAGE 2: Install project dependencies
+
+FROM base as builder
+
+RUN apt-get -y -q update \
+    && apt-get install -y -q --no-install-recommends \
+        curl \
+        build-essential \
+    && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+
+WORKDIR $PYSETUP_PATH
+
+COPY poetry.lock pyproject.toml ./
+
+RUN poetry install --no-dev --no-interaction
+
+
+# STAGE 3: Deploy app
+
+FROM base
+
+COPY --from=builder $PYSETUP_PATH $PYSETUP_PATH
+
+WORKDIR $PROJECT_PATH
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "app:app"]
