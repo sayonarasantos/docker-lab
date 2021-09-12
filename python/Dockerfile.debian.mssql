@@ -1,0 +1,59 @@
+# STAGE 1: Create base image
+
+FROM python:3.8-slim-buster as base
+
+ENV PYSETUP_PATH=/usr/local
+ENV PROJECT_PATH=/opt/project
+ENV DEBIAN_FRONTEND=noninteractive
+
+
+# STAGE 2: Install project dependencies
+
+FROM base as builder
+
+COPY requirements.txt .
+
+RUN apt-get -y -q update \
+    && apt-get install -y -q --no-install-recommends \
+        build-essential \
+        unixodbc-dev \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+
+# STAGE 3: Deploy app
+
+FROM base
+
+ARG USER_NAME=beyonce
+
+RUN apt-get -y -q update \
+    && apt-get install -y -q --no-install-recommends \
+        curl \
+        gnupg2 \
+    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get -y -q update \
+    && ACCEPT_EULA=Y apt-get install -y -q --no-install-recommends \
+        msodbcsql17 \
+        mssql-tools \
+   && apt-get -y -q remove \
+        curl \
+        gnupg2 \
+   && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder $PYSETUP_PATH $PYSETUP_PATH
+
+RUN useradd --system $USER_NAME \
+    && mkdir $PROJECT_PATH -p \
+    && chown -R $USER_NAME:$USER_NAME $PROJECT_PATH
+
+USER $USER_NAME
+
+WORKDIR $PROJECT_PATH
+
+COPY --chown=$USER_NAME:$USER_NAME . ./
+
+EXPOSE 8000
+
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "app:app"]

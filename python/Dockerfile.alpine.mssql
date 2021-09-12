@@ -1,0 +1,57 @@
+# STAGE 1: Create base image
+
+FROM python:3.8.11-alpine3.14 as base
+
+ENV PYSETUP_PATH=/usr/local
+ENV PROJECT_PATH=/opt/project
+ENV DEBIAN_FRONTEND=noninteractive
+
+
+# STAGE 2: Install project dependencies
+
+FROM base as builder
+
+COPY requirements.txt .
+
+RUN apk add --no-cache \
+        build-base \
+        unixodbc-dev \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+
+# STAGE 3: Deploy app
+
+FROM base
+
+ARG USER_NAME=aretha
+
+RUN apk add --no-cache \
+        unixodbc-dev \
+        libstdc++ \
+        curl \
+    && curl -O https://download.microsoft.com/download/e/4/e/e4e67866-dffd-428c-aac7-8d28ddafb39b/msodbcsql17_17.8.1.1-1_amd64.apk \
+    && curl -O https://download.microsoft.com/download/e/4/e/e4e67866-dffd-428c-aac7-8d28ddafb39b/mssql-tools_17.8.1.1-1_amd64.apk \
+    && apk add --no-cache --allow-untrusted \
+        msodbcsql17_17.8.1.1-1_amd64.apk \
+        mssql-tools_17.8.1.1-1_amd64.apk \
+    && apk add --no-cache --allow-untrusted \
+        msodbcsql17_17.8.1.1-1_amd64.apk \
+        mssql-tools_17.8.1.1-1_amd64.apk \
+   && apk del curl
+
+COPY --from=builder $PYSETUP_PATH $PYSETUP_PATH
+
+RUN useradd --system $USER_NAME \
+    && mkdir $PROJECT_PATH -p \
+    && chown -R $USER_NAME:$USER_NAME $PROJECT_PATH
+
+USER $USER_NAME
+
+WORKDIR $PROJECT_PATH
+
+COPY --chown=$USER_NAME:$USER_NAME . ./
+
+EXPOSE 8000
+
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "app:app"]
