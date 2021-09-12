@@ -1,0 +1,6 @@
+teampass/
+**/.env*
+!**/.env.*.model
+certbot/etc
+certbot/lib
+certbot/log

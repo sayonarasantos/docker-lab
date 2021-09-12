@@ -1,6 +1,4 @@
 angular
-certbot
 influxdb-grafana
 nodejs
-teampass
 tmp*
