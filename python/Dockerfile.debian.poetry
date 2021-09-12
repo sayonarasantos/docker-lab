@@ -1,6 +1,6 @@
 # STAGE 1: Create base image
 
-FROM python:3.8-slim-buster as base
+FROM python:3.8-slim-buster AS base
 
 ARG POETRY_VERSION=1.1.8
 
@@ -22,7 +22,7 @@ ENV PATH=$POETRY_HOME/bin:$PYSETUP_PATH/.venv/bin:$PATH
 
 # STAGE 2: Install project dependencies
 
-FROM base as builder
+FROM base AS builder
 
 RUN apt-get -y -q update \
     && apt-get install -y -q --no-install-recommends \

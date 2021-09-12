@@ -1,6 +1,6 @@
 # STAGE 1: Create base image
 
-FROM python:3.8-slim-buster as base
+FROM python:3.8-slim-buster AS base
 
 ENV PYSETUP_PATH=/usr/local
 ENV PROJECT_PATH=/opt/project
@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # STAGE 2: Install project dependencies
 
-FROM base as builder
+FROM base AS builder
 
 COPY requirements.txt .
 
