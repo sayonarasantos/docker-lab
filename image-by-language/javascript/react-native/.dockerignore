@@ -1,15 +1,11 @@
-# Docker
-Dockerfile
+Dockerfile*
 .dockerignore
-docker-compose.yml
+docker-compose*
 
-# IOS
 ios/
 
-# React
 node_modules/
 
-# Git
 .gitignore
 .git/
 README.md

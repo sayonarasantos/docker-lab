@@ -1,0 +1,28 @@
+version: "3.7"
+
+
+services:
+  backend:
+    container_name: nodejs-prod
+    image: app:nodejs
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env.dev.app
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - database
+
+  database:
+    container_name: db-prod
+    image: postgres:alpine
+    env_file:
+      - .env.dev.db
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped

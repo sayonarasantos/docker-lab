@@ -8,10 +8,11 @@ WORKDIR /project
 COPY . .
 
 RUN npm ci \
-    && npm run build:prod
+    && ng build --configuration=production --aot
 
 
-# STAGE 2: DEPLOYMENT
+# STAGE 2: Deploy app
+
 FROM nginx:alpine
 
 RUN rm -rf /usr/share/nginx/html/*

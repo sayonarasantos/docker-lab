@@ -1,0 +1,19 @@
+FROM python:3.8-alpine
+
+ARG USER_NAME=aretha
+ARG PROJECT_PATH=/project
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN useradd --system $USER_NAME \
+    && mkdir $PROJECT_PATH -p \
+    && chown -R $USER_NAME:$USER_NAME $PROJECT_PATH
+
+USER $USER_NAME
+
+WORKDIR $PROJECT_PATH
+
+COPY --chown=$USER_NAME:$USER_NAME . ./
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt

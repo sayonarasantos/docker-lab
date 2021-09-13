@@ -1,0 +1,13 @@
+.gitignore
+.git/
+
+README.md
+*.logs
+
+dist/
+node_modules/
+
+docker-compose*
+Dockerfile*
+
+.env*

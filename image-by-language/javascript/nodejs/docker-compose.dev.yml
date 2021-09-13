@@ -1,0 +1,29 @@
+version: "3.7"
+
+
+services:
+  ## Container for development
+  backend:
+    container_name: nodejs-dev
+    image: node:alpine
+    volumes:
+      - ${PWD}:/project/
+    env_file:
+      - .env.dev.app
+    ports:
+      - "3000:3000"
+    working_dir: /project/
+    stdin_open: true
+    tty: true
+    depends_on:
+      - database
+
+  database:
+    container_name: db-dev
+    image: postgres:alpine
+    env_file:
+      - .env.dev.db
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
