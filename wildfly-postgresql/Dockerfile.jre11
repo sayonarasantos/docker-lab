@@ -1,0 +1,55 @@
+# Stage 1: Create openjdk base image
+
+FROM openjdk:11.0.12-jre-slim-buster as openjdk-base
+
+ARG WILDFLY_VERSION=24.0.0.Final
+ARG POSTGRESQL_VERSION=42.2.24
+
+ENV WILDFLY_VERSION=${WILDFLY_VERSION}
+ENV POSTGRESQL_VERSION=${POSTGRESQL_VERSION}
+
+
+# Stage 2: Get WildFly and Postgres
+
+FROM openjdk-base as env-builder
+
+WORKDIR /tmp
+
+RUN apt-get -y -q update \
+    && apt-get install -y -q --no-install-recommends \
+        curl \
+        tar \
+    ## Get WildFly
+    && curl -O https://download.jboss.org/wildfly/${WILDFLY_VERSION}/wildfly-${WILDFLY_VERSION}.tar.gz \
+    && tar -xf wildfly-${WILDFLY_VERSION}.tar.gz \
+    ## Get Postgres - JDBC Driver
+    && curl https://jdbc.postgresql.org/download/postgresql-${POSTGRESQL_VERSION}.jar -o postgresql-${POSTGRESQL_VERSION}.jar
+
+
+# Stage 3: Deploy WildFly
+
+FROM openjdk-base
+
+ARG USER_PASSWORD
+ARG USER_NAME=rihanna
+
+ENV JBOSS_HOME=/opt/jboss/wildfly
+
+RUN useradd --system ${USER_NAME} \
+    && mkdir -p ${JBOSS_HOME} \
+    && chown -R ${USER_NAME} ${JBOSS_HOME}
+
+## Configure WildFly
+COPY --chown=${USER_NAME} --from=env-builder /tmp/wildfly-${WILDFLY_VERSION} ${JBOSS_HOME}
+
+COPY --chown=${USER_NAME} --from=env-builder /tmp/postgresql-${POSTGRESQL_VERSION}.jar ${JBOSS_HOME}/modules/org/postgres/main/
+
+RUN ${JBOSS_HOME}/bin/add-user.sh ${USER_NAME} -p ${USER_PASSWORD} -s
+
+USER ${USER_NAME}
+
+WORKDIR ${JBOSS_HOME}
+
+EXPOSE 8080 8443 9990
+
+CMD ["./bin/standalone.sh", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0", "-Djboss.http.port=8080"]
