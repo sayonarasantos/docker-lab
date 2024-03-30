@@ -1,27 +1,37 @@
-version: "3.8"
+version: "3"
 
 services:
   db-server:
     container_name: db-server
     image: postgres
-    env_file:
-      - .env.db
+    environment:
+      - POSTGRES_DB=umbrella
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_ENCODING=UTF-8
     ports:
       - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}'"]
+      interval: 10s
+      retries: 3
+      timeout: 10s
 
   db-admin:
     container_name: db-admin
     image: dpage/pgadmin4
-    env_file:
-      - .env.dbadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=rihanna@email.com
+      - PGADMIN_DEFAULT_PASSWORD=1234
     ports:
       - "80:80"
     volumes:
       - pgadmin-lib:/var/lib/pgadmin
     depends_on:
-      - db-server
+      db-server:
+        condition: service_healthy
 
 volumes:
   postgres-data:
